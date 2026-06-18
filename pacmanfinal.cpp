@@ -54,7 +54,19 @@ bool dirFan[4][4] = {
     {true, false, false, false}
 };
 
+/*
+int frameFan[4] = {0, 0, 0, 0};
 
+f -> fantasma 0 1 2 3
+d -> direcao 0 1 - 2 3 - 4 5 - 6 7
+fra -> frame 0 1
+
+if direcao[f][0] dire = 0
+else if direcao[f][1] dire = 1
+...
+
+spriteAtualFan[f] = &texFantasmas[f][2*dire + frame]
+*/
 
 int main() {
     // cria a janela
@@ -295,6 +307,8 @@ if (clock.getElapsedTime() > sf::seconds(0.2)) {
             spriteAtual->setPosition({posx*50.f, posy*50.f});
             window.draw(*spriteAtual);
         }
+        
+
 
         //DESENHA FANTASMA
 
@@ -320,4 +334,5 @@ if (clock.getElapsedTime() > sf::seconds(0.2)) {
         window.display();
     }
     return 0;
+    
 }
