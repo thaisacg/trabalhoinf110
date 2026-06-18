@@ -9,7 +9,7 @@ char mapa[13][36] = {    // Mapa do jogo
   "1011011101110111011101110111101101",
   "0000010000000100000100000000100000",
   "1011110111110111111101111101111101",
-  "1000000000100000000000100000000001",
+  "1000000000100000000000100000000001", //y=c5  x= l14
   "1011111110101111111110101111111101",
   "0000010000000000100000000000100000",
   "1110111011111101110111111101110111",
@@ -19,6 +19,8 @@ char mapa[13][36] = {    // Mapa do jogo
   
 };
 bool moedas[13][36];
+
+    //PACMAN   
 
 int posx = 16; // posicao do PacMan
 int posy = 7;
@@ -38,6 +40,21 @@ bool olhabaixo = false;
 
 int totalMoedas=0;
 int moedasColetadas=0;
+
+//FANTASMAS => 0-vermelho, 1-rosa, 2-azul, 3-laranja
+int fposx[4] = {14, 15, 17, 18};
+int fposy[4] = {5, 5, 5, 5};
+
+    //direção fantasma => 00:03-vermelho. cada linha um fantasma
+    //0:3=dir, esq, cima, baixo
+bool dirFan[4][4] = {
+    {false, false, true, false}, //vermelho
+    {false, false, true, false},
+    {false, true, false, false},
+    {true, false, false, false}
+};
+
+
 
 int main() {
     // cria a janela
@@ -66,6 +83,39 @@ int main() {
     sf::Sprite spritefundo(texturafundo);
 spritefundo.setScale({1850.f / texturafundo.getSize().x, 850.f / texturafundo.getSize().y});
 
+//matriz fantasmas. 0-vermelho, 1-rosa, 2-azul, 3-laranja
+//[fantasma][direção] => 0:3=dir, esq, cima, baixo
+
+sf::Texture texFantasmas[4][4];
+for (int f = 0; f < 4; f++) {
+    int linhaY = f * 40; // na sheet, cada fantasma tem 42 de altura e 38 de largura, então aqui
+    //talvez eu coloque a opção da perninha deles mecherem tbm, mas ainda to descobrindo (por isso o x não ta mudando de 38 em 38)
+    
+    if (!texFantasmas[f][0].loadFromFile("fantasmas-sheet1.png", false, sf::IntRect({0, linhaY}, {38, 42}))) {
+        std::cout << "Erro lendo fantasma " << f << " direita\n";
+        return 0;
+    }
+    if (!texFantasmas[f][1].loadFromFile("fantasmas-sheet1.png", false, sf::IntRect({76, linhaY}, {38, 42}))) {
+        std::cout << "Erro lendo fantasma " << f << " esquerda\n";
+        return 0;
+    }
+    if (!texFantasmas[f][2].loadFromFile("fantasmas-sheet1.png", false, sf::IntRect({152, linhaY}, {38, 42}))) {
+        std::cout << "Erro lendo fantasma " << f << " cima\n";
+        return 0;
+    }
+    if (!texFantasmas[f][3].loadFromFile("fantasmas-sheet1.png", false, sf::IntRect({228, linhaY}, {38, 42}))) {
+        std::cout << "Erro lendo fantasma " << f << " baixo\n";
+        return 0;
+    }
+}
+
+sf::Sprite spriteFantasma[4] = {
+    sf::Sprite(texFantasmas[0][0]),
+    sf::Sprite(texFantasmas[1][0]),
+    sf::Sprite(texFantasmas[2][0]),
+    sf::Sprite(texFantasmas[3][0])
+};
+    
     // sprites do Sonic
 sf::Texture texturedir0, texturedir1, texturedir2;
 if (!texturedir0.loadFromFile("sonicdireita0.png")) { std::cout << "Erro lendo sonicdireita0.png\n"; return 0; }
@@ -107,9 +157,14 @@ int frame = 0;
     for(int i=0;i<13;i++)
     for(int j=0;j<37;j++)
         if(mapa[i][j] == '0'){
-            moedas[i][j]=mapa[i][j];
+            moedas[i][j]=true;
             totalMoedas++;
         }
+    //tira moedas da casa dos fantasmas
+    for(int j=14; j<19; j++){
+        moedas[5][j]=false;
+        totalMoedas--;
+    }
 
     while (window.isOpen()) {
 
@@ -208,6 +263,8 @@ if (clock.getElapsedTime() > sf::seconds(0.2)) {
                     moeda.setPosition({j*50.f + 25.f, i*50.f + 25.f});
                     window.draw(moeda);
                 }        
+
+
         // desenha o Sonic
 // avança o frame a cada movimento
         sf::Sprite* spriteAtual = nullptr;
@@ -237,6 +294,27 @@ if (clock.getElapsedTime() > sf::seconds(0.2)) {
             spriteAtual->setPosition({posx*50.f, posy*50.f});
             window.draw(*spriteAtual);
         }
+
+        //DESENHA FANTASMA
+
+        for(int f=0; f<4; f++){
+            if(dirFan[f][0]) spriteFantasma[f].setTexture(texFantasmas[f][0]);
+            else if(dirFan[f][1]) spriteFantasma[f].setTexture(texFantasmas[f][1]);
+            else if(dirFan[f][2]) spriteFantasma[f].setTexture(texFantasmas[f][2]);
+            else if(dirFan[f][3]) spriteFantasma[f].setTexture(texFantasmas[f][3]);
+
+            spriteFantasma[f].setPosition({fposx[f]*50.f, fposy[f]*50.f});
+                window.draw(spriteFantasma[f]);
+        }
+               /* //Textura por direção
+                if(dirFan[0][0]) spriteVermelho.setTexture(texVermCima);
+                if(dirFan[0][1]) spriteVermelho.setTexture(texVermBaixo);
+                if(dirFan[0][2]) spriteVermelho.setTexture(texVermEsq);
+                if(dirFan[0][3]) spriteVermelho.setTexture(texVermDir);
+
+                //Coloca o fantasma
+                spriteVermelho.setPosition({fposx[0]*50.f, fposy[0]*50.f});
+                window.draw(spriteVermelho); */
 
         window.display();
     }
