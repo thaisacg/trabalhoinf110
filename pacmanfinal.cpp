@@ -90,7 +90,8 @@ sf::Texture texFantasmas[4][4];
 for (int f = 0; f < 4; f++) {
     int linhaY = f * 40; // na sheet, cada fantasma tem 42 de altura e 38 de largura, então aqui
     //talvez eu coloque a opção da perninha deles mecherem tbm, mas ainda to descobrindo (por isso o x não ta mudando de 38 em 38)
-    
+    //o fantasma azul ta pegando uma parte da linha de baixo
+
     if (!texFantasmas[f][0].loadFromFile("fantasmas-sheet1.png", false, sf::IntRect({0, linhaY}, {38, 42}))) {
         std::cout << "Erro lendo fantasma " << f << " direita\n";
         return 0;
