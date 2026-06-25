@@ -1,19 +1,21 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
+#include <cstdlib>
+#include <ctime>
 
 char mapa[13][36] = {    // Mapa do jogo
   "1011111110101111111110101111111101",
   "1000010000100000100000100000100001",
   "1010111011111101110111111101110101",
   "1010000000100000000000100000000101",
-  "1011011101110111011101110111101101",
-  "0000010000000100000100000000100000",
+  "1011011101110111011101110111101101", //x é horizontal
+  "0000010000000100000100000000100000", // y é vertical. Y AUMENTA=vai para BAIXO
   "1011110111110111111101111101111101",
   "1000000000100000000000100000000001", //y=c5  x= l14
   "1011111110101111111110101111111101",
-  "0000010000000000100000000000100000",
+  "0000010000000000100000000000100000", 
   "1110111011111101110111111101110111",
-  "0000000000100000000000100000000000",
+  "0000000000100000000000100000000000", 
   "1011111110101111111110101111111101"
 
   
@@ -54,9 +56,9 @@ bool dirFan[4][4] = {
     {true, false, false, false}
 };
 
-/*
-int frameFan[4] = {0, 0, 0, 0};
+int frameFan = 0; //todos terão o mesmo frame
 
+/*
 f -> fantasma 0 1 2 3
 d -> direcao 0 1 - 2 3 - 4 5 - 6 7
 fra -> frame 0 1
@@ -69,8 +71,11 @@ spriteAtualFan[f] = &texFantasmas[f][2*dire + frame]
 */
 
 int main() {
+
+    srand(time(0));
+
     // cria a janela
-    sf::RenderWindow window(sf::VideoMode({1700, 650}), "Minha janela");
+    sf::RenderWindow window(sf::VideoMode({1700, 710}), "Minha janela");
 
     // cria um círculo de raio 50
     sf::CircleShape circ(50.f);
@@ -86,6 +91,21 @@ int main() {
     sf::CircleShape moeda(7.f); // moedas
         moeda.setFillColor(sf::Color(255, 255, 100));
         moeda.setOrigin({7.f, 7.f});
+
+    // FONTE
+    sf::Font font;
+        if (!font.openFromFile("arial.ttf")) {
+        std::cout << "Erro lendo arial.ttf\n";
+        return 0;
+    }
+
+    sf::Text textPlacar(font);
+    char s[50] = "Pontos: 0";
+    textPlacar.setString(s);
+    textPlacar.setCharacterSize(40);
+    textPlacar.setFillColor(sf::Color::Yellow);
+    textPlacar.setStyle(sf::Text::Bold);
+    textPlacar.setPosition({20.f, 655.f});
     
     sf::Texture texturafundo;
     if (!texturafundo.loadFromFile("fundo.png")) {
@@ -93,7 +113,7 @@ int main() {
         return 0;
     }
     sf::Sprite spritefundo(texturafundo);
-spritefundo.setScale({1850.f / texturafundo.getSize().x, 850.f / texturafundo.getSize().y});
+    spritefundo.setScale({1700.f / texturafundo.getSize().x, 650.f / texturafundo.getSize().y});
 
 //matriz fantasmas. 0-vermelho, 1-rosa, 2-azul, 3-laranja
 //[fantasma][direção] => 0:3=dir, esq, cima, baixo
@@ -109,7 +129,7 @@ for (int f = 0; f < 4; f++) {
         return 0;
     }
     if (!texFantasmas[f][1].loadFromFile("fantasmas-sheet1.png", false, sf::IntRect({38, linhaY}, {38, 42}))) {
-        std::cout << "Erro lendo fantasma " << f << " direita f2\n";
+        std::cout << "Erro lendo fantasma " << f << " direita frame 2\n";
         return 0;
     }
     if (!texFantasmas[f][2].loadFromFile("fantasmas-sheet1.png", false, sf::IntRect({76, linhaY}, {38, 42}))) {
@@ -129,11 +149,11 @@ for (int f = 0; f < 4; f++) {
         return 0;
     }
     if (!texFantasmas[f][6].loadFromFile("fantasmas-sheet1.png", false, sf::IntRect({228, linhaY}, {38, 42}))) {
-        std::cout << "Erro lendo fantasma " << f << " baixo\n";
+        std::cout << "Erro lendo fantasma " << f << " baixo frame 1\n";
         return 0;
     }
     if (!texFantasmas[f][7].loadFromFile("fantasmas-sheet1.png", false, sf::IntRect({267, linhaY}, {38, 42}))) {
-        std::cout << "Erro lendo fantasma " << f << " baixo\n";
+        std::cout << "Erro lendo fantasma " << f << " baixo f2\n";
         return 0;
     }
 }
@@ -176,9 +196,9 @@ sf::Sprite spritebaixo0(texturabaixo0), spritebaixo1(texturabaixo1), spritebaixo
 // índice do frame atual
 int frame = 0;
 
-
     // cria um relogio para medir o tempo
     sf::Clock clock;
+    sf::Clock clockFantasmas;
 
     // executa o programa enquanto a janela está aberta
 
@@ -271,7 +291,75 @@ if (clock.getElapsedTime() > sf::seconds(0.2)) {
             moedasColetadas++;
         }
     }
+
+    // FRAME DOS FANTASMAS
+
+    if(frameFan==0) frameFan =1;
+    else frameFan = 0;
+
 }
+
+    // MOVIMENTAÇÃO DOS FANTASMAS
+    if (clockFantasmas.getElapsedTime() > sf::seconds(0.35)) {
+        clockFantasmas.restart();
+
+        for(int f = 0; f < 4; f++) {
+            // verifica quais dierções em volta do fantasma são validas (!=1)
+            int valida = 0;
+            if(mapa[fposy[f]][fposx[f]+1] != '1') valida++;
+            if(mapa[fposy[f]][fposx[f]-1] != '1') valida++;
+            if(mapa[fposy[f]-1][fposx[f]] != '1') valida++;
+            if(mapa[fposy[f]+1][fposx[f]] != '1') valida++;
+
+            // calcula próxima posição possível (px, py) 
+            int px = fposx[f], py = fposy[f];
+            if(dirFan[f][0]) px++;
+            else if(dirFan[f][1]) px--;
+            else if(dirFan[f][2]) py--;
+            else if(dirFan[f][3]) py++;
+
+            // se tem 3 ou mais posições validas (encruzilhada) ou se for parede na prox pos posivel é sorteado de novo
+            if(mapa[py][px] == '1' || valida > 2) { 
+                int opcoes[4], n = 0; 
+                
+                if(mapa[fposy[f]][fposx[f]+1] != '1'){
+                    opcoes[n] = 0; 
+                    n++;
+                }
+                if(mapa[fposy[f]][fposx[f]-1] != '1') {
+                    opcoes[n] = 1;
+                    n++;
+                }
+                if(mapa[fposy[f]-1][fposx[f]] != '1'){
+                        opcoes[n] = 2;
+                        n++;
+                }
+                if(mapa[fposy[f]+1][fposx[f]] != '1'){
+                    opcoes[n] = 3;
+                    n++;
+                }
+                // sorteio dentre as posições q o fantasma tem disponivel
+                if(n > 0) {
+                    dirFan[f][0] = dirFan[f][1] = dirFan[f][2] = dirFan[f][3] = false;
+                    dirFan[f][opcoes[rand() % n]] = true;
+                }
+
+                // recalcula próxima posição com nova direção
+                px = fposx[f]; py = fposy[f];
+                if(dirFan[f][0]) px++;
+                else if(dirFan[f][1]) px--;
+                else if(dirFan[f][2]) py--;
+                else if(dirFan[f][3]) py++;
+            }
+
+            // move se não tiver parede
+            if(mapa[py][px] != '1' ) {
+                fposx[f] = px;
+                fposy[f] = py;
+            }
+        }
+    }
+    /****************************/
 
         // limpa a janela com a cor preta
         window.clear(sf::Color::Black);
@@ -329,23 +417,19 @@ if (clock.getElapsedTime() > sf::seconds(0.2)) {
         //DESENHA FANTASMA
 
         for(int f=0; f<4; f++){
-            if(dirFan[f][0]) spriteFantasma[f].setTexture(texFantasmas[f][0]);
-            else if(dirFan[f][1]) spriteFantasma[f].setTexture(texFantasmas[f][1]);
-            else if(dirFan[f][2]) spriteFantasma[f].setTexture(texFantasmas[f][2]);
-            else if(dirFan[f][3]) spriteFantasma[f].setTexture(texFantasmas[f][3]);
+            if(dirFan[f][0]) spriteFantasma[f].setTexture(texFantasmas[f][0+frameFan]); //se frame=0 continua direita 1, se frame=1, vira a direita 2 (indice 1)
+            else if(dirFan[f][2]) spriteFantasma[f].setTexture(texFantasmas[f][2+frameFan]);
+            else if(dirFan[f][4]) spriteFantasma[f].setTexture(texFantasmas[f][4+frameFan]);
+            else if(dirFan[f][6]) spriteFantasma[f].setTexture(texFantasmas[f][6+frameFan]);
 
             spriteFantasma[f].setPosition({fposx[f]*50.f, fposy[f]*50.f});
                 window.draw(spriteFantasma[f]);
         }
-               /* //Textura por direção
-                if(dirFan[0][0]) spriteVermelho.setTexture(texVermCima);
-                if(dirFan[0][1]) spriteVermelho.setTexture(texVermBaixo);
-                if(dirFan[0][2]) spriteVermelho.setTexture(texVermEsq);
-                if(dirFan[0][3]) spriteVermelho.setTexture(texVermDir);
 
-                //Coloca o fantasma
-                spriteVermelho.setPosition({fposx[0]*50.f, fposy[0]*50.f});
-                window.draw(spriteVermelho); */
+        char s[50];
+        snprintf(s, 50, "Pontos: %d", moedasColetadas);
+        textPlacar.setString(s);
+        window.draw(textPlacar);
 
         window.display();
     }
