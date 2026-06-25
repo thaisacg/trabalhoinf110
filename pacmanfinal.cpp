@@ -98,25 +98,41 @@ spritefundo.setScale({1850.f / texturafundo.getSize().x, 850.f / texturafundo.ge
 //matriz fantasmas. 0-vermelho, 1-rosa, 2-azul, 3-laranja
 //[fantasma][direção] => 0:3=dir, esq, cima, baixo
 
-sf::Texture texFantasmas[4][4];
+sf::Texture texFantasmas[4][8];
 for (int f = 0; f < 4; f++) {
     int linhaY = f * 40; // na sheet, cada fantasma tem 42 de altura e 38 de largura, então aqui
     //talvez eu coloque a opção da perninha deles mecherem tbm, mas ainda to descobrindo (por isso o x não ta mudando de 38 em 38)
     //o fantasma azul ta pegando uma parte da linha de baixo
 
     if (!texFantasmas[f][0].loadFromFile("fantasmas-sheet1.png", false, sf::IntRect({0, linhaY}, {38, 42}))) {
-        std::cout << "Erro lendo fantasma " << f << " direita\n";
+        std::cout << "Erro lendo fantasma " << f << " direita frame 1\n";
         return 0;
     }
-    if (!texFantasmas[f][1].loadFromFile("fantasmas-sheet1.png", false, sf::IntRect({76, linhaY}, {38, 42}))) {
-        std::cout << "Erro lendo fantasma " << f << " esquerda\n";
+    if (!texFantasmas[f][1].loadFromFile("fantasmas-sheet1.png", false, sf::IntRect({38, linhaY}, {38, 42}))) {
+        std::cout << "Erro lendo fantasma " << f << " direita f2\n";
         return 0;
     }
-    if (!texFantasmas[f][2].loadFromFile("fantasmas-sheet1.png", false, sf::IntRect({152, linhaY}, {38, 42}))) {
-        std::cout << "Erro lendo fantasma " << f << " cima\n";
+    if (!texFantasmas[f][2].loadFromFile("fantasmas-sheet1.png", false, sf::IntRect({76, linhaY}, {38, 42}))) {
+        std::cout << "Erro lendo fantasma " << f << " esquerda f1\n";
         return 0;
     }
-    if (!texFantasmas[f][3].loadFromFile("fantasmas-sheet1.png", false, sf::IntRect({228, linhaY}, {38, 42}))) {
+    if (!texFantasmas[f][3].loadFromFile("fantasmas-sheet1.png", false, sf::IntRect({114, linhaY}, {38, 42}))) {
+        std::cout << "Erro lendo fantasma " << f << " esquerda f2\n";
+        return 0;
+    }
+    if (!texFantasmas[f][4].loadFromFile("fantasmas-sheet1.png", false, sf::IntRect({152, linhaY}, {38, 42}))) {
+        std::cout << "Erro lendo fantasma " << f << " cima f1\n";
+        return 0;
+    }
+    if (!texFantasmas[f][5].loadFromFile("fantasmas-sheet1.png", false, sf::IntRect({190, linhaY}, {38, 42}))) {
+        std::cout << "Erro lendo fantasma " << f << " cima f2\n";
+        return 0;
+    }
+    if (!texFantasmas[f][6].loadFromFile("fantasmas-sheet1.png", false, sf::IntRect({228, linhaY}, {38, 42}))) {
+        std::cout << "Erro lendo fantasma " << f << " baixo\n";
+        return 0;
+    }
+    if (!texFantasmas[f][7].loadFromFile("fantasmas-sheet1.png", false, sf::IntRect({267, linhaY}, {38, 42}))) {
         std::cout << "Erro lendo fantasma " << f << " baixo\n";
         return 0;
     }
