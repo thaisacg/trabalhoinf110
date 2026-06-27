@@ -21,6 +21,8 @@ char mapa[13][36] = {    // Mapa do jogo
   
 };
 bool moedas[13][36];
+int totalMoedas=0;
+int moedasColetadas=0;
 
     //PACMAN   
 
@@ -40,8 +42,6 @@ bool olhacima = false;
 bool olhaesquerda = false;
 bool olhabaixo = false;
 
-int totalMoedas=0;
-int moedasColetadas=0;
 
 //FANTASMAS => 0-vermelho, 1-rosa, 2-azul, 3-laranja
 int fposx[4] = {14, 15, 17, 18};
@@ -296,7 +296,7 @@ if (clock.getElapsedTime() > sf::seconds(0.2)) {
 }
 
 // MOVIMENTAÇÃO DOS FANTASMAS
-        if (clockFantasmas.getElapsedTime() > sf::seconds(0.35)) {
+        if (clockFantasmas.getElapsedTime() > sf::seconds(0.40)) {
             clockFantasmas.restart();
         // FRAME DOS FANTASMAS
             
@@ -365,6 +365,22 @@ if (clock.getElapsedTime() > sf::seconds(0.2)) {
                 fposy[f] = py;
             }
         }
+
+        for(int f = 0; f < 4; f++){
+    if(fposx[f] == posx && fposy[f] == posy){
+        char s[50] = "GAME OVER!";
+        textPlacar.setString(s);
+        textPlacar.setCharacterSize(80);
+        textPlacar.setFillColor(sf::Color::Red);
+        textPlacar.setPosition({600.f, 300.f});
+        textPlacar.setStyle(sf::Text::Bold);
+
+        window.draw(textPlacar);
+        window.display();
+        
+    }
+}
+
     }
     /****************************/
 
