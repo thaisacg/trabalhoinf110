@@ -113,7 +113,7 @@ int main() {
         return 0;
     }
     sf::Sprite spritefundo(texturafundo);
-    spritefundo.setScale({1700.f / texturafundo.getSize().x, 650.f / texturafundo.getSize().y});
+    spritefundo.setScale({1700.f / texturafundo.getSize().x, 710.f / texturafundo.getSize().y});
 
 //matriz fantasmas. 0-vermelho, 1-rosa, 2-azul, 3-laranja
 //[fantasma][direção] => 0:3=dir, esq, cima, baixo
@@ -292,18 +292,25 @@ if (clock.getElapsedTime() > sf::seconds(0.2)) {
         }
     }
 
-    // FRAME DOS FANTASMAS
-
-    if(frameFan==0) frameFan =1;
-    else frameFan = 0;
-
+    
 }
 
-    // MOVIMENTAÇÃO DOS FANTASMAS
-    if (clockFantasmas.getElapsedTime() > sf::seconds(0.35)) {
-        clockFantasmas.restart();
+// MOVIMENTAÇÃO DOS FANTASMAS
+        if (clockFantasmas.getElapsedTime() > sf::seconds(0.35)) {
+            clockFantasmas.restart();
+        // FRAME DOS FANTASMAS
+            
+        if(frameFan==0) frameFan =1;
+        else frameFan = 0;
 
         for(int f = 0; f < 4; f++) {
+
+             // Fazer fantasmas passarem pelos tuneis
+            if (fposy[f] < 0) fposy[f] = 12;
+            if (fposy[f] > 12) fposy[f] = 0;
+            if (fposx[f] < 0) fposx[f] = 34;
+            if (fposx[f] > 34) fposx[f] = 0;
+
             // verifica quais dierções em volta do fantasma são validas (!=1)
             int valida = 0;
             if(mapa[fposy[f]][fposx[f]+1] != '1') valida++;
