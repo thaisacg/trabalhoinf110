@@ -21,6 +21,7 @@ char mapa[13][36] = {    // Mapa do jogo
 
 int pontuacao = 0;
 bool jogoFinalizado = false;
+bool jogoPerdido = false;
 
 bool moedas[13][36];
 
@@ -98,6 +99,10 @@ int escolherDirecao(int f, int origemX, int origemY, int alvoX, int alvoY) {
     return melhorDirecao;
 }
 
+
+   
+
+
     //direção fantasma => 00:03-vermelho. cada linha um fantasma
     //0:3=dir, esq, cima, baixo
 bool dirFan[4][4] = {
@@ -131,7 +136,7 @@ int main() {
     sf::Text textoPontuacao(fonte);
     textoPontuacao.setCharacterSize(30);
     textoPontuacao.setFillColor(sf::Color::Yellow);
-    textoPontuacao.setPosition({1400.f, 20.f}); // canto direito, ajusta conforme seu layout
+    textoPontuacao.setPosition({100.f, 600.f}); // canto direito, ajusta conforme seu layout
 
     sf::Text textoFimDeJogo(fonte);
     textoFimDeJogo.setCharacterSize(60);
@@ -142,6 +147,12 @@ int main() {
     // cria a janela
     sf::RenderWindow window(sf::VideoMode({1700, 650}), "Minha janela");
 
+    sf::Text textoPerdeu(fonte);
+    textoPerdeu.setCharacterSize(60);
+    textoPerdeu.setFillColor(sf::Color::Yellow);
+    textoPerdeu.setString("VOCE PERDEU!");
+    // centraliza aproximadamente na janela (1700x650)
+    textoPerdeu.setPosition({600.f, 280.f});
 
     // cria um quadrado de tamanho 50
     sf::RectangleShape quad({45.f, 45.f});
@@ -298,7 +309,7 @@ int frame = 0;
         // Muda a posição do PacMan a cada 0.2 segundos
 if (clock.getElapsedTime() > sf::seconds(0.2)) {
     clock.restart();
-    if (!jogoFinalizado) {
+    if (!jogoFinalizado && !jogoPerdido) {
     if (movendo) {
 
         if (frame == 2) frame = 0;
@@ -338,6 +349,9 @@ if (clock.getElapsedTime() > sf::seconds(0.2)) {
 
         if (moedasColetadas >= totalMoedas) {
             jogoFinalizado = true;
+        }
+        if(posy == *fposy && posx == *fposx){
+            jogoPerdido = true;
         }
     }
     // movimento do fantasma vermelho
@@ -455,7 +469,9 @@ if (clock.getElapsedTime() > sf::seconds(0.2)) {
         if (jogoFinalizado) {
             window.draw(textoFimDeJogo);
         }
-        
+        if (jogoPerdido) {
+            window.draw(textoPerdeu);
+        }
         window.display();
     }
     return 0;
