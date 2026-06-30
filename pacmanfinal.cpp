@@ -8,21 +8,24 @@ char mapa[13][36] = {    // Mapa do jogo
   "1000010000100000100000100000100001",
   "1010111011111101110111111101110101",
   "1010000000100000000000100000000101",
-  "1011011101110111011101110111101101", //x é horizontal
-  "0000010000000100000100000000100000", // y é vertical. Y AUMENTA=vai para BAIXO
+  "1011011101110111011101110111101101",
+  "0000010000000100000100000000100000",
   "1011110111110111111101111101111101",
   "1000000000100000000000100000000001", //y=c5  x= l14
   "1011111110101111111110101111111101",
-  "0000010000000000100000000000100000", 
+  "0000010000000000100000000000100000",
   "1110111011111101110111111101110111",
-  "0000000000100000000000100000000000", 
+  "0000000000100000000000100000000000",
   "1011111110101111111110101111111101"
 
   
 };
+
+int pontuacao = 0;
+bool jogoFinalizado = false;
+bool jogoPerdido = false;
+
 bool moedas[13][36];
-int totalMoedas=0;
-int moedasColetadas=0;
 
     //PACMAN   
 
@@ -42,10 +45,65 @@ bool olhacima = false;
 bool olhaesquerda = false;
 bool olhabaixo = false;
 
+int totalMoedas=0;
+int moedasColetadas=0;
 
 //FANTASMAS => 0-vermelho, 1-rosa, 2-azul, 3-laranja
 int fposx[4] = {14, 15, 17, 18};
 int fposy[4] = {5, 5, 5, 5};
+
+sf::Clock clockGeral;
+float tempoLiberacao[4]={0.0f, 0.0f, 3.0f, 6.0f}; //coloquei 4 posições pra não confundir
+bool fanLiberado[4]= {false, true, false, false};
+
+const int dxF[4] = {1, -1, 0, 0}; // dir, esq, cima, baixo
+const int dyF[4] = {0, 0, -1, 1};
+
+int direcaoAnterior[4] = {-1, -1, -1, -1}; // de onde cada fantasma veio
+int tickFantasma[4] = {0, 0, 0, 0};
+const int INTERVALO_RECALCULO = 5; // recalcula a cada 5 movimentos
+
+int escolherDirecao(int f, int origemX, int origemY, int alvoX, int alvoY) {
+    int melhorDirecao = -1;
+    int melhorDistancia = -1;
+
+    int direcaoOposta = -1;
+    if (direcaoAnterior[f] == 0) direcaoOposta = 1;
+    else if (direcaoAnterior[f] == 1) direcaoOposta = 0;
+    else if (direcaoAnterior[f] == 2) direcaoOposta = 3;
+    else if (direcaoAnterior[f] == 3) direcaoOposta = 2;
+
+    bool achou = false;
+
+    for (int tentativa = 0; tentativa < 2; tentativa++) {
+        for (int d = 0; d < 4; d++) {
+            if (tentativa == 0 && d == direcaoOposta) continue;
+
+            int nx = origemX + dxF[d];
+            int ny = origemY + dyF[d];
+
+            if (nx < 0) nx = 35;       // 36 colunas, índice 0..35
+            if (nx >= 36) nx = 0;
+            if (ny < 0) ny = 12;       // 13 linhas, índice 0..12
+            if (ny >= 13) ny = 0;
+
+            if (mapa[ny][nx] == '1') continue;
+
+            int distX = nx - alvoX;
+            int distY = ny - alvoY;
+            int distancia = distX*distX + distY*distY;
+
+            if (melhorDirecao == -1 || distancia < melhorDistancia) {
+                melhorDistancia = distancia;
+                melhorDirecao = d;
+                achou = true;
+            }
+        }
+        if (achou) break;
+    }
+
+    return melhorDirecao;
+}
 
     //direção fantasma => 00:03-vermelho. cada linha um fantasma
     //0:3=dir, esq, cima, baixo
@@ -58,7 +116,10 @@ bool dirFan[4][4] = {
 
 int frameFan = 0; //todos terão o mesmo frame
 
+
 /*
+int frameFan[4] = {0, 0, 0, 0};
+
 f -> fantasma 0 1 2 3
 d -> direcao 0 1 - 2 3 - 4 5 - 6 7
 fra -> frame 0 1
@@ -74,15 +135,32 @@ int main() {
 
     srand(time(0));
 
-    // cria a janela
-    sf::RenderWindow window(sf::VideoMode({1700, 710}), "Minha janela");
+    sf::Font fonte; // pra fazer a pontuacao
+    if (!fonte.openFromFile("fonte.ttf")) {
+        std::cout << "Erro lendo fonte.ttf\n";
+        return 0;
+    }
 
-    // cria um círculo de raio 50
-    sf::CircleShape circ(50.f);
-    // define a posição absoluta do círculo
-    circ.setPosition({10.f, 50.f});
-    // define a cor do círculo (verde)
-    circ.setFillColor(sf::Color(100, 250, 50));
+    sf::Text textoPontuacao(fonte);
+    textoPontuacao.setCharacterSize(30);
+    textoPontuacao.setFillColor(sf::Color::Yellow);
+    textoPontuacao.setPosition({100.f, 600.f}); // canto direito, ajusta conforme seu layout
+
+    sf::Text textoFimDeJogo(fonte);
+    textoFimDeJogo.setCharacterSize(60);
+    textoFimDeJogo.setFillColor(sf::Color::Yellow);
+    textoFimDeJogo.setString("VOCE VENCEU!");
+    // centraliza aproximadamente na janela (1700x650)
+    textoFimDeJogo.setPosition({600.f, 280.f});
+    // cria a janela
+    sf::RenderWindow window(sf::VideoMode({1700, 650}), "Minha janela");
+
+    sf::Text textoPerdeu(fonte);
+    textoPerdeu.setCharacterSize(60);
+    textoPerdeu.setFillColor(sf::Color::Yellow);
+    textoPerdeu.setString("VOCE PERDEU!");
+    // centraliza aproximadamente na janela (1700x650)
+    textoPerdeu.setPosition({600.f, 280.f});
 
     // cria um quadrado de tamanho 50
     sf::RectangleShape quad({45.f, 45.f});
@@ -91,21 +169,6 @@ int main() {
     sf::CircleShape moeda(7.f); // moedas
         moeda.setFillColor(sf::Color(255, 255, 100));
         moeda.setOrigin({7.f, 7.f});
-
-    // FONTE
-    sf::Font font;
-        if (!font.openFromFile("arial.ttf")) {
-        std::cout << "Erro lendo arial.ttf\n";
-        return 0;
-    }
-
-    sf::Text textPlacar(font);
-    char s[50] = "Pontos: 0";
-    textPlacar.setString(s);
-    textPlacar.setCharacterSize(40);
-    textPlacar.setFillColor(sf::Color::Yellow);
-    textPlacar.setStyle(sf::Text::Bold);
-    textPlacar.setPosition({20.f, 655.f});
     
     sf::Texture texturafundo;
     if (!texturafundo.loadFromFile("fundo.png")) {
@@ -113,7 +176,7 @@ int main() {
         return 0;
     }
     sf::Sprite spritefundo(texturafundo);
-    spritefundo.setScale({1700.f / texturafundo.getSize().x, 710.f / texturafundo.getSize().y});
+spritefundo.setScale({1850.f / texturafundo.getSize().x, 850.f / texturafundo.getSize().y});
 
 //matriz fantasmas. 0-vermelho, 1-rosa, 2-azul, 3-laranja
 //[fantasma][direção] => 0:3=dir, esq, cima, baixo
@@ -129,7 +192,7 @@ for (int f = 0; f < 4; f++) {
         return 0;
     }
     if (!texFantasmas[f][1].loadFromFile("fantasmas-sheet1.png", false, sf::IntRect({38, linhaY}, {38, 42}))) {
-        std::cout << "Erro lendo fantasma " << f << " direita frame 2\n";
+        std::cout << "Erro lendo fantasma " << f << " direita f2\n";
         return 0;
     }
     if (!texFantasmas[f][2].loadFromFile("fantasmas-sheet1.png", false, sf::IntRect({76, linhaY}, {38, 42}))) {
@@ -149,11 +212,11 @@ for (int f = 0; f < 4; f++) {
         return 0;
     }
     if (!texFantasmas[f][6].loadFromFile("fantasmas-sheet1.png", false, sf::IntRect({228, linhaY}, {38, 42}))) {
-        std::cout << "Erro lendo fantasma " << f << " baixo frame 1\n";
+        std::cout << "Erro lendo fantasma " << f << " baixo\n";
         return 0;
     }
     if (!texFantasmas[f][7].loadFromFile("fantasmas-sheet1.png", false, sf::IntRect({267, linhaY}, {38, 42}))) {
-        std::cout << "Erro lendo fantasma " << f << " baixo f2\n";
+        std::cout << "Erro lendo fantasma " << f << " baixo\n";
         return 0;
     }
 }
@@ -204,7 +267,7 @@ int frame = 0;
 
     // coloca a posição das moedas no mapa
     for(int i=0;i<13;i++)
-    for(int j=0;j<37;j++)
+    for(int j=0;j<36;j++)
         if(mapa[i][j] == '0'){
             moedas[i][j]=true;
             totalMoedas++;
@@ -216,6 +279,8 @@ int frame = 0;
     }
 
     while (window.isOpen()) {
+
+        float tempo = clockGeral.getElapsedTime().asSeconds();
 
         // verifica todos os eventos que foram acionados na janela desde a última iteração do loop
         while (const std::optional event = window.pollEvent()) {
@@ -254,7 +319,7 @@ int frame = 0;
         // Muda a posição do PacMan a cada 0.2 segundos
 if (clock.getElapsedTime() > sf::seconds(0.2)) {
     clock.restart();
-    
+    if (!jogoFinalizado && !jogoPerdido) {
     if (movendo) {
 
         if (frame == 2) frame = 0;
@@ -289,21 +354,77 @@ if (clock.getElapsedTime() > sf::seconds(0.2)) {
         if(moedas[posy][posx]){ //se tiver moedas na pos, conta +1
             moedas[posy][posx] = false;
             moedasColetadas++;
+             pontuacao += 1; 
         }
+
+        if (moedasColetadas >= totalMoedas) {
+            jogoFinalizado = true;
+        }
+
+        for(int i=1; i<4; i++){
+            if(posy==fposy[i] && posx==fposx[i])
+            jogoPerdido = true;
+
+        }
+
+        if(posy == *fposy && posx == *fposx){
+            jogoPerdido = true;
+        }
+    }
+    // movimento do fantasma vermelho
+    float percentualColetado = moedasColetadas / (float) totalMoedas;
+    bool fantasmaVermelhoLiberado = percentualColetado >= 0.2f;
+
+    if (fantasmaVermelhoLiberado) {
+        int f = 0; // só o fantasma vermelho
+
+        tickFantasma[f]++;
+
+        if (tickFantasma[f] >= INTERVALO_RECALCULO) {
+            tickFantasma[f] = 0;
+
+            int direcao = escolherDirecao(f, fposx[f], fposy[f], posx, posy);
+
+            if (direcao != -1) {
+                dirFan[f][0] = dirFan[f][1] = dirFan[f][2] = dirFan[f][3] = false;
+                dirFan[f][direcao] = true;
+
+                int nx = fposx[f] + dxF[direcao];
+                int ny = fposy[f] + dyF[direcao];
+
+                if (nx < 0) nx = 35;
+                if (nx >= 36) nx = 0;
+                if (ny < 0) ny = 12;
+                if (ny >= 13) ny = 0;
+
+                fposx[f] = nx;
+                fposy[f] = ny;
+                direcaoAnterior[f] = direcao;
+            }
+        }
+    }
+    }
     }
 
     
-}
+    for(int f=1; f<4; f++){
+        
+        if(!fanLiberado[f] && tempo >= tempoLiberacao[f]){
+            fanLiberado[f]=true;
+        }
+    }
 
-// MOVIMENTAÇÃO DOS FANTASMAS
-        if (clockFantasmas.getElapsedTime() > sf::seconds(0.40)) {
+    // MOVIMENTAÇÃO DOS FANTASMAS
+        if (clockFantasmas.getElapsedTime() > sf::seconds(0.30)) {
             clockFantasmas.restart();
         // FRAME DOS FANTASMAS
             
         if(frameFan==0) frameFan =1;
         else frameFan = 0;
 
-        for(int f = 0; f < 4; f++) {
+        for(int f = 1; f < 4; f++) {
+
+            if(!fanLiberado[f]) continue;
 
              // Fazer fantasmas passarem pelos tuneis
             if (fposy[f] < 0) fposy[f] = 12;
@@ -366,21 +487,6 @@ if (clock.getElapsedTime() > sf::seconds(0.2)) {
             }
         }
 
-        for(int f = 0; f < 4; f++){
-    if(fposx[f] == posx && fposy[f] == posy){
-        char s[50] = "GAME OVER!";
-        textPlacar.setString(s);
-        textPlacar.setCharacterSize(80);
-        textPlacar.setFillColor(sf::Color::Red);
-        textPlacar.setPosition({600.f, 300.f});
-        textPlacar.setStyle(sf::Text::Bold);
-
-        window.draw(textPlacar);
-        window.display();
-        
-    }
-}
-
     }
     /****************************/
 
@@ -439,21 +545,35 @@ if (clock.getElapsedTime() > sf::seconds(0.2)) {
 
         //DESENHA FANTASMA
 
-        for(int f=0; f<4; f++){
+       for(int f=0; f<4; f++){
             if(dirFan[f][0]) spriteFantasma[f].setTexture(texFantasmas[f][0+frameFan]); //se frame=0 continua direita 1, se frame=1, vira a direita 2 (indice 1)
             else if(dirFan[f][2]) spriteFantasma[f].setTexture(texFantasmas[f][2+frameFan]);
             else if(dirFan[f][4]) spriteFantasma[f].setTexture(texFantasmas[f][4+frameFan]);
             else if(dirFan[f][6]) spriteFantasma[f].setTexture(texFantasmas[f][6+frameFan]);
 
+
             spriteFantasma[f].setPosition({fposx[f]*50.f, fposy[f]*50.f});
                 window.draw(spriteFantasma[f]);
         }
+               /* //Textura por direção
+                if(dirFan[0][0]) spriteVermelho.setTexture(texVermCima);
+                if(dirFan[0][1]) spriteVermelho.setTexture(texVermBaixo);
+                if(dirFan[0][2]) spriteVermelho.setTexture(texVermEsq);
+                if(dirFan[0][3]) spriteVermelho.setTexture(texVermDir);
 
-        char s[50];
-        snprintf(s, 50, "Pontos: %d", moedasColetadas);
-        textPlacar.setString(s);
-        window.draw(textPlacar);
+                //Coloca o fantasma
+                spriteVermelho.setPosition({fposx[0]*50.f, fposy[0]*50.f});
+                window.draw(spriteVermelho); */
 
+        textoPontuacao.setString("Pontos: " + std::to_string(pontuacao));
+        window.draw(textoPontuacao);
+
+        if (jogoFinalizado) {
+            window.draw(textoFimDeJogo);
+        }
+        if (jogoPerdido) {
+            window.draw(textoPerdeu);
+        }
         window.display();
     }
     return 0;
